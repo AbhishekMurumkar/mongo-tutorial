@@ -1,0 +1,12 @@
+
+use('ecom')
+use('products')
+
+# update a collection
+db.products.find({
+    '_id':'6033e99891a5e6c607633cbe'
+},{
+    $set:{
+        'monitor':'4600'
+    }
+})
