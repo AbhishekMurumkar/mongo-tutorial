@@ -59,6 +59,221 @@ lets create one
 
 <center><h1>Update</h1></center>
 
+| Command | description |
+| :---: | :--- |
+| db.collection.update<br>(\<query>,{$operator:{...new json}},\<options>) | updates top most record with new json which matches condition query, you can override this behaviout to update multiple documents by providing ```{multi:true}``` in options |
+| db.collection.updateOne<br>(\<query>,{$operator:{...new json}},\<options>) | updates top most document that matches the query |
+| db.collection.updateMany<br>(\<query>,{$operator:{...new json}},\<options>) | updates all the documents that matches the query|
+| replaceOne<br>(\<query\>,{...newjson}) | replaces the top most found json in query with new json|
+
+## Operators used in update
+| Command | description |
+| :---: | :--- |
+| $set| updates/replaces the new json OR creates a new key if key in new json doesnt exists|
+| $unset| removes the keys from document for matched conditions|
+| $exists | check if a key exists in document|
+| $rename | rename a key in document, if you want for all then use ```{multi:true}``` option|
+| $currentDate | to set/update current date |
+
+### $set example
+```javascript
+db.persons.update(
+    {
+        index:2
+    },//query
+    {
+        $set:{
+            "newKey":2,
+            "existingkey":"newvalue"
+        }
+    },//new json
+    {},//options
+)
+```
+
+### $unset example
+```javascript
+db.persons.update(
+    {
+        index:2
+    },//query
+    {
+        $unset:{
+            "newKey":1, //1 means this key value pair is removed from the document 
+            "existingkey":1
+        }
+    },//new json
+    {},//options
+)
+```
+### Combining operators
+```javascript
+db.Persons.update(
+    {index:2},
+    {
+        $set:{
+            name:"new",
+            details:{
+                "phone":"909090"
+            }
+        },
+        $unset:{
+            age:1
+        }
+    }
+)
+```
+
+### renaming operator
+```javascript
+db.Persons.updateOne(
+    {
+        cartId:{ $exists:true }
+    },
+    {
+        $rename:{
+            cartId:"ShopperID",
+            total:"CheckoutPrice"
+        }
+    }
+)
+```
+### current date exmaple
+```javascript
+//setting the createdAt field as current date
+db.Persons.updateOne(
+    {index:345},
+    {
+        $currentDate:{"createdAt":true}
+    }
+)
+```
+
+### update output
+
+![](2021-03-05-13-11-46.png)
+
+### update one output
+
+![](2021-03-05-13-10-00.png)
+
+### update many output
+
+![](2021-03-05-13-14-53.png)
+
+<br>
+
+
+## Update Operators for Arrays
+
+| Command | description |
+| :---: | :--- |
+| $ ||
+| $push | adds an element (to last) into existing array in an document, Note if there was no array previously then new array will automatically be created even for existing keys which are not array|
+| $addToSet | This is similar to above one, but here we first check whether the item exists or not, if not then only we append new element. If key doesnt exists then a new key with single item in anrray is created |
+| $pull | removes all elements in Array matching specific element or condition |
+| $pullAll | deletes all values based on list of values. This is different from above is that we cannot use conditions in this operator but only set of values in an array|
+| $pop | deletes element at first(set value as -1) or last element(set value as 1) of array|
+<br>
+
+### $push example
+```javascript
+db.Persons.update(
+    {index:1},
+    {
+        $set:{
+            cartId:NumberInt(561),
+            $push:{
+                items:{ 
+                    $each:["item1","item2","item3"]
+                    // pushing new array in key named as items
+                },// here we pushed multiple items at once in an array
+                item: "item1"
+                // pushing new value in array in key named as item
+                // here we pushed single item in an array
+            }
+        }
+    }
+)
+```
+
+### $addToSet example
+```javascript
+db.Persons.update(
+    {index:1},
+    {
+        $set:{
+            $addToSet:{
+                items:{ 
+                    $each:["item1","item2","item3"]
+                    // pushing new array in key named as items
+                },// here we pushed multiple items at once in an array
+                item: "item1"
+                // pushing new value in array in key named as item
+                // here we pushed single item in an array
+            }
+        }
+    }
+)
+```
+
+### Pop operator example
+```javascript
+db.Persons.update(
+    {index:1},
+    {
+        $set:{
+            $pop: { items:1 }// removing last element of array
+    }
+)
+```
+
+### Pull Operator Example
+```javascript
+db.Persons.update(
+    {cartId:561},
+    {
+        $addToSet:{
+            spentAmouts: { 
+                $each:[
+                NumberInt(10),
+                NumberInt(20),
+                NumberInt(80),
+                NumberInt(60),
+                ] 
+            }
+        },
+        $pull:{
+            spentAmounts: { $gt:50 }
+            // removing elements from spent Amounts array whose value are greater than 50
+            spentAmounts:20 // removing single element in spentAmounts Array whose value id 20
+        }
+    }
+)
+```
+
+### PullAll Operator Example
+```javascript
+db.Persons.update(
+    {cartId:561},
+    {
+        $push:{
+            items: { 
+                $each:[
+                    "i1",
+                    "i2",
+                    "i3",
+                    "i2",
+                    "i1"
+                ] 
+            }
+        },
+        $pullAll:{
+            items:["i1","i2"] // removes all elements from items array whose value is i1 and i2
+        }
+    }
+)
+```
 --- 
 
 <center><h1>Delete</h1></center>
